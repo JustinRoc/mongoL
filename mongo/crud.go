@@ -131,14 +131,14 @@ func (c *Collection) FindWithPagination(ctx context.Context, filter bson.M, page
 }
 
 // UpdateOne 更新单个文档
-func (c *Collection) UpdateOne(ctx context.Context, filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
+func (c *Collection) UpdateOne(ctx context.Context, filter bson.M, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	// 添加更新时间
 	if update["$set"] == nil {
 		update["$set"] = bson.M{}
 	}
 	update["$set"].(bson.M)["updated_at"] = time.Now()
 
-	result, err := c.collection.UpdateOne(ctx, filter, update)
+	result, err := c.collection.UpdateOne(ctx, filter, update, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update document: %w", err)
 	}
@@ -146,9 +146,9 @@ func (c *Collection) UpdateOne(ctx context.Context, filter bson.M, update bson.M
 }
 
 // UpdateByID 根据ID更新文档
-func (c *Collection) UpdateByID(ctx context.Context, id primitive.ObjectID, update bson.M) (*mongo.UpdateResult, error) {
+func (c *Collection) UpdateByID(ctx context.Context, id primitive.ObjectID, update bson.M, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	filter := bson.M{"_id": id}
-	return c.UpdateOne(ctx, filter, update)
+	return c.UpdateOne(ctx, filter, update, opts...)
 }
 
 // UpdateMany 更新多个文档

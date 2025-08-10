@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,6 +29,10 @@ type IndexModel struct {
 }
 
 // CreateIndex 创建单个索引
+// 符合索引示例：bson.D{{"category_id", 1}, {"status", 1}, {"created_at", -1}}
+// 唯一索引：opts.SetUnique(true)
+// 稀疏索引：opts.SetSparse(true)
+// TTL索引：opts.SetExpireAfterSeconds(int32(expireAfter.Seconds()))
 func (im *IndexManager) CreateIndex(ctx context.Context, keys bson.D, opts *options.IndexOptions) (string, error) {
 	indexModel := mongo.IndexModel{
 		Keys:    keys,
@@ -64,44 +67,6 @@ func (im *IndexManager) CreateIndexes(ctx context.Context, models []IndexModel) 
 	return names, nil
 }
 
-// DropIndex 删除索引
-func (im *IndexManager) DropIndex(ctx context.Context, name string) error {
-	_, err := im.collection.Indexes().DropOne(ctx, name)
-	if err != nil {
-		return fmt.Errorf("failed to drop index %s: %w", name, err)
-	}
-
-	log.Printf("Dropped index: %s", name)
-	return nil
-}
-
-// DropAllIndexes 删除所有索引（除了_id索引）
-func (im *IndexManager) DropAllIndexes(ctx context.Context) error {
-	_, err := im.collection.Indexes().DropAll(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to drop all indexes: %w", err)
-	}
-
-	log.Println("Dropped all indexes")
-	return nil
-}
-
-// ListIndexes 列出所有索引
-func (im *IndexManager) ListIndexes(ctx context.Context) ([]bson.M, error) {
-	cursor, err := im.collection.Indexes().List(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list indexes: %w", err)
-	}
-	defer cursor.Close(ctx)
-
-	var indexes []bson.M
-	if err := cursor.All(ctx, &indexes); err != nil {
-		return nil, fmt.Errorf("failed to decode indexes: %w", err)
-	}
-
-	return indexes, nil
-}
-
 // CreateTextIndex 创建文本索引
 func (im *IndexManager) CreateTextIndex(ctx context.Context, fields []string, opts *options.IndexOptions) (string, error) {
 	keys := bson.D{}
@@ -112,52 +77,6 @@ func (im *IndexManager) CreateTextIndex(ctx context.Context, fields []string, op
 	if opts == nil {
 		opts = options.Index()
 	}
-
-	return im.CreateIndex(ctx, keys, opts)
-}
-
-// CreateCompoundIndex 创建复合索引
-func (im *IndexManager) CreateCompoundIndex(ctx context.Context, fields map[string]int, opts *options.IndexOptions) (string, error) {
-	keys := bson.D{}
-	for field, order := range fields {
-		keys = append(keys, bson.E{Key: field, Value: order})
-	}
-
-	return im.CreateIndex(ctx, keys, opts)
-}
-
-// CreateUniqueIndex 创建唯一索引
-func (im *IndexManager) CreateUniqueIndex(ctx context.Context, field string, opts *options.IndexOptions) (string, error) {
-	keys := bson.D{{Key: field, Value: 1}}
-
-	if opts == nil {
-		opts = options.Index()
-	}
-	opts.SetUnique(true)
-
-	return im.CreateIndex(ctx, keys, opts)
-}
-
-// CreateSparseIndex 创建稀疏索引
-func (im *IndexManager) CreateSparseIndex(ctx context.Context, field string, opts *options.IndexOptions) (string, error) {
-	keys := bson.D{{Key: field, Value: 1}}
-
-	if opts == nil {
-		opts = options.Index()
-	}
-	opts.SetSparse(true)
-
-	return im.CreateIndex(ctx, keys, opts)
-}
-
-// CreateTTLIndex 创建TTL索引（生存时间索引）
-func (im *IndexManager) CreateTTLIndex(ctx context.Context, field string, expireAfter time.Duration, opts *options.IndexOptions) (string, error) {
-	keys := bson.D{{Key: field, Value: 1}}
-
-	if opts == nil {
-		opts = options.Index()
-	}
-	opts.SetExpireAfterSeconds(int32(expireAfter.Seconds()))
 
 	return im.CreateIndex(ctx, keys, opts)
 }
@@ -278,4 +197,43 @@ func (ci *CommonIndexes) CreateArticleIndexes(ctx context.Context) error {
 
 	_, err := ci.indexManager.CreateIndexes(ctx, indexes)
 	return err
+}
+
+
+// DropIndex 删除索引
+func (im *IndexManager) DropIndex(ctx context.Context, name string) error {
+	_, err := im.collection.Indexes().DropOne(ctx, name)
+	if err != nil {
+		return fmt.Errorf("failed to drop index %s: %w", name, err)
+	}
+
+	log.Printf("Dropped index: %s", name)
+	return nil
+}
+
+// DropAllIndexes 删除所有索引（除了_id索引）
+func (im *IndexManager) DropAllIndexes(ctx context.Context) error {
+	_, err := im.collection.Indexes().DropAll(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to drop all indexes: %w", err)
+	}
+
+	log.Println("Dropped all indexes")
+	return nil
+}
+
+// ListIndexes 列出所有索引
+func (im *IndexManager) ListIndexes(ctx context.Context) ([]bson.M, error) {
+	cursor, err := im.collection.Indexes().List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list indexes: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var indexes []bson.M
+	if err := cursor.All(ctx, &indexes); err != nil {
+		return nil, fmt.Errorf("failed to decode indexes: %w", err)
+	}
+
+	return indexes, nil
 }

@@ -1,4 +1,4 @@
-package test
+package biz
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	mongodriver "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // demonstrateUserOperations 演示用户相关操作
@@ -174,7 +175,9 @@ func demonstrateIndexOperations(client *mongo.Client) error {
 	indexManager := mongo.NewIndexManager(client, "articles")
 
 	// 创建TTL索引（30天后过期）
-	_, err := indexManager.CreateTTLIndex(ctx, "created_at", 30*24*time.Hour, nil)
+	opts := options.Index()
+	opts.SetExpireAfterSeconds(30 * 24 * 3600)
+	_, err := indexManager.CreateIndex(ctx, bson.D{{Key: "created_at", Value: 1}}, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create TTL index: %w", err)
 	}

@@ -5,6 +5,7 @@ go 1.24
 require (
 	github.com/JustinRoc/pkg v0.0.0-20250810093636-f936e69862c1
 	github.com/joho/godotenv v1.5.1
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.4
 )
