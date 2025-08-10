@@ -1,76 +1,21 @@
-package main
+package test
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
-	"mongodbL/mongo"
+	"github.com/JustinRoc/mongodbL/mongo"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	mongodriver "go.mongodb.org/mongo-driver/mongo"
 )
 
-func main() {
-	// 创建 MongoDB 客户端配置
-	config := &mongo.Config{
-		URI:            "mongodb://localhost:27017",
-		Database:       "testdb",
-		ConnectTimeout: 10 * time.Second,
-		MaxPoolSize:    100,
-		MinPoolSize:    5,
-	}
-
-	// 连接到 MongoDB
-	client, err := mongo.NewClient(config)
-	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
-	}
-	defer func() {
-		if err := client.Close(); err != nil {
-			log.Printf("Error closing MongoDB connection: %v", err)
-		}
-	}()
-
-	// 测试连接
-	if err := client.Ping(); err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
-	}
-	fmt.Println("✅ Successfully connected to MongoDB")
-
-	// 演示用户操作
-	fmt.Println("\n=== 用户操作演示 ===")
-	if err := demonstrateUserOperations(client); err != nil {
-		log.Printf("User operations error: %v", err)
-	}
-
-	// 演示文章操作
-	fmt.Println("\n=== 文章操作演示 ===")
-	if err := demonstrateArticleOperations(client); err != nil {
-		log.Printf("Article operations error: %v", err)
-	}
-
-	// 演示索引操作
-	fmt.Println("\n=== 索引操作演示 ===")
-	if err := demonstrateIndexOperations(client); err != nil {
-		log.Printf("Index operations error: %v", err)
-	}
-
-	// 演示事务操作
-	fmt.Println("\n=== 事务操作演示 ===")
-	if err := demonstrateTransactionOperations(client); err != nil {
-		log.Printf("Transaction operations error: %v", err)
-	}
-
-	fmt.Println("\n🎉 所有演示完成！")
-}
-
 // demonstrateUserOperations 演示用户相关操作
 func demonstrateUserOperations(client *mongo.Client) error {
 	ctx := context.Background()
-	userRepo := mongo.NewRepository(client, "users")
+	userCol := mongo.NewCollection(client, "users")
 
 	// 创建用户
 	user := &mongo.User{
@@ -84,7 +29,7 @@ func demonstrateUserOperations(client *mongo.Client) error {
 	user.Profile.Bio = "Software Developer"
 
 	// 插入用户
-	result, err := userRepo.InsertOne(ctx, user)
+	result, err := userCol.InsertOne(ctx, user)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
 	}
@@ -93,7 +38,7 @@ func demonstrateUserOperations(client *mongo.Client) error {
 	// 查找用户
 	var foundUser mongo.User
 	filter := bson.M{"username": "john_doe"}
-	if err := userRepo.FindOne(ctx, filter, &foundUser); err != nil {
+	if err := userCol.FindOne(ctx, filter, &foundUser); err != nil {
 		return fmt.Errorf("failed to find user: %w", err)
 	}
 	fmt.Printf("✅ 找到用户: %s (%s)\n", foundUser.Username, foundUser.Email)
@@ -105,14 +50,14 @@ func demonstrateUserOperations(client *mongo.Client) error {
 			"status":      "premium",
 		},
 	}
-	updateResult, err := userRepo.UpdateByID(ctx, foundUser.ID, update)
+	updateResult, err := userCol.UpdateByID(ctx, foundUser.ID, update)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 	fmt.Printf("✅ 更新用户成功，修改了 %d 个文档\n", updateResult.ModifiedCount)
 
 	// 计算用户数量
-	count, err := userRepo.Count(ctx, bson.M{"status": "premium"})
+	count, err := userCol.Count(ctx, bson.M{"status": "premium"})
 	if err != nil {
 		return fmt.Errorf("failed to count users: %w", err)
 	}
@@ -124,7 +69,7 @@ func demonstrateUserOperations(client *mongo.Client) error {
 // demonstrateArticleOperations 演示文章相关操作
 func demonstrateArticleOperations(client *mongo.Client) error {
 	ctx := context.Background()
-	articleRepo := mongo.NewRepository(client, "articles")
+	articleRepo := mongo.NewCollection(client, "articles")
 
 	// 创建文章
 	article := &mongo.Article{
@@ -252,8 +197,8 @@ func demonstrateTransactionOperations(client *mongo.Client) error {
 
 	// 在事务中执行多个操作
 	err := txnManager.WithTransaction(ctx, func(sessCtx mongodriver.SessionContext) error {
-		userRepo := mongo.NewRepository(client, "users")
-		articleRepo := mongo.NewRepository(client, "articles")
+		userRepo := mongo.NewCollection(client, "users")
+		articleRepo := mongo.NewCollection(client, "articles")
 
 		// 创建用户
 		user := &mongo.User{

@@ -62,20 +62,20 @@ func (tm *TransactionManager) WithSession(ctx context.Context, fn func(mongo.Ses
 
 // TransactionalRepository 支持事务的仓储
 type TransactionalRepository struct {
-	*Repository
+	*Collection
 	session mongo.Session
 }
 
 // NewTransactionalRepository 创建支持事务的仓储
 func NewTransactionalRepository(client *Client, collectionName string) *TransactionalRepository {
 	return &TransactionalRepository{
-		Repository: NewRepository(client, collectionName),
+		Collection: NewCollection(client, collectionName),
 	}
 }
 
 // WithTransaction 在事务中执行操作
-func (tr *TransactionalRepository) WithTransaction(ctx context.Context, fn func(sessCtx mongo.SessionContext, repo *Repository) error) error {
-	session, err := tr.client.client.StartSession()
+func (tr *TransactionalRepository) WithTransaction(ctx context.Context, fn func(sessCtx mongo.SessionContext, repo *Collection) error) error {
+	session, err := tr.cli.client.StartSession()
 	if err != nil {
 		return fmt.Errorf("failed to start session: %w", err)
 	}
@@ -85,8 +85,8 @@ func (tr *TransactionalRepository) WithTransaction(ctx context.Context, fn func(
 
 	_, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		// 创建一个在事务上下文中的仓储
-		txnRepo := &Repository{
-			client:     tr.client,
+		txnRepo := &Collection{
+			cli:        tr.cli,
 			collection: tr.collection,
 		}
 		return nil, fn(sessCtx, txnRepo)

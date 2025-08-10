@@ -13,6 +13,8 @@ type Document interface {
 	GetCreatedAt() time.Time
 	GetUpdatedAt() time.Time
 	SetUpdatedAt(t time.Time)
+	BeforeInsert()
+	BeforeUpdate()
 }
 
 // BaseDocument 基础文档结构体
@@ -50,9 +52,9 @@ func (d *BaseDocument) SetUpdatedAt(t time.Time) {
 // BeforeInsert 插入前的钩子函数
 func (d *BaseDocument) BeforeInsert() {
 	now := time.Now()
-	if d.ID.IsZero() {
-		d.ID = primitive.NewObjectID()
-	}
+	// if d.ID.IsZero() {
+	// 	d.ID = primitive.NewObjectID()
+	// }
 	if d.CreatedAt.IsZero() {
 		d.CreatedAt = now
 	}
