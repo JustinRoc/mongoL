@@ -22,12 +22,6 @@ func NewIndexManager(client *Client, collectionName string) *IndexManager {
 	}
 }
 
-// IndexModel 索引模型
-type IndexModel struct {
-	Keys    bson.D
-	Options *options.IndexOptions
-}
-
 // CreateIndex 创建单个索引
 // 符合索引示例：bson.D{{"category_id", 1}, {"status", 1}, {"created_at", -1}}
 // 唯一索引：opts.SetUnique(true)
@@ -49,15 +43,7 @@ func (im *IndexManager) CreateIndex(ctx context.Context, keys bson.D, opts *opti
 }
 
 // CreateIndexes 创建多个索引
-func (im *IndexManager) CreateIndexes(ctx context.Context, models []IndexModel) ([]string, error) {
-	var indexModels []mongo.IndexModel
-	for _, model := range models {
-		indexModels = append(indexModels, mongo.IndexModel{
-			Keys:    model.Keys,
-			Options: model.Options,
-		})
-	}
-
+func (im *IndexManager) CreateIndexes(ctx context.Context, indexModels []mongo.IndexModel) ([]string, error) {
 	names, err := im.collection.Indexes().CreateMany(ctx, indexModels)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create indexes: %w", err)
@@ -143,7 +129,7 @@ func NewCommonIndexes(client *Client, collectionName string) *CommonIndexes {
 
 // CreateUserIndexes 为用户集合创建常用索引
 func (ci *CommonIndexes) CreateUserIndexes(ctx context.Context) error {
-	indexes := []IndexModel{
+	indexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "username", Value: 1}},
 			Options: options.Index().SetUnique(true).SetName("idx_username"),
@@ -168,7 +154,7 @@ func (ci *CommonIndexes) CreateUserIndexes(ctx context.Context) error {
 
 // CreateArticleIndexes 为文章集合创建常用索引
 func (ci *CommonIndexes) CreateArticleIndexes(ctx context.Context) error {
-	indexes := []IndexModel{
+	indexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "title", Value: "text"}, {Key: "content", Value: "text"}},
 			Options: options.Index().SetName("idx_text_search"),

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -23,7 +24,7 @@ func NewDocumentIndexes(client *Client) *DocumentIndexes {
 func (di *DocumentIndexes) CreateUserIndexes(ctx context.Context) error {
 	indexManager := NewIndexManager(di.client, "users")
 	
-	indexes := []IndexModel{
+	indexes := []mongo.IndexModel{
 		// 1. 用户名唯一索引 - 用于登录和用户查找
 		{
 			Keys:    bson.D{{"username", 1}},
@@ -80,7 +81,7 @@ func (di *DocumentIndexes) CreateUserIndexes(ctx context.Context) error {
 func (di *DocumentIndexes) CreateArticleIndexes(ctx context.Context) error {
 	indexManager := NewIndexManager(di.client, "articles")
 	
-	indexes := []IndexModel{
+	indexes := []mongo.IndexModel{
 		// 1. 作者ID索引 - 用于查询某个用户的所有文章
 		{
 			Keys:    bson.D{{"author_id", 1}},
@@ -159,7 +160,7 @@ func (di *DocumentIndexes) CreateArticleIndexes(ctx context.Context) error {
 func (di *DocumentIndexes) CreateCategoryIndexes(ctx context.Context) error {
 	indexManager := NewIndexManager(di.client, "categories")
 	
-	indexes := []IndexModel{
+	indexes := []mongo.IndexModel{
 		// 1. 分类名称唯一索引 - 确保分类名称不重复
 		{
 			Keys:    bson.D{{"name", 1}},
@@ -231,7 +232,7 @@ func (di *DocumentIndexes) CreateAllDocumentIndexes(ctx context.Context) error {
 func (di *DocumentIndexes) CreateBaseDocumentIndexes(ctx context.Context, collectionName string) error {
 	indexManager := NewIndexManager(di.client, collectionName)
 	
-	indexes := []IndexModel{
+	indexes := []mongo.IndexModel{
 		// 创建时间索引
 		{
 			Keys:    bson.D{{"created_at", -1}},
