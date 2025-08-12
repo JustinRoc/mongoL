@@ -3,9 +3,9 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/JustinRoc/pkg/slogw"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -65,7 +65,7 @@ func NewClient(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
-	log.Printf("Successfully connected to MongoDB: %s", config.URI)
+	slogw.Info("Successfully connected to MongoDB", "uri", config.URI, "database", config.Database)
 
 	return &Client{
 		client:   client,
