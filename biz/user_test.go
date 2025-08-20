@@ -53,6 +53,10 @@ func TestSuite(t *testing.T) {
 			slogw.ErrorContext(ctx, "Error closing MongoDB connection", "err", err)
 		}
 	}()
+	if config.URI != "mongodb://localhost:27017" {
+		slogw.WarnContext(ctx, "don't test in corporate DB")
+		return
+	}
 
 	suite := &Suite{
 		ctx:    ctx,
